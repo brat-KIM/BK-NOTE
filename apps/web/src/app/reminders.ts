@@ -8,9 +8,10 @@ export function startReminders(services: Services, intervalMs = 60_000) {
   const { db, platform } = services;
   const check = async () => {
     const now = new Date().toISOString();
+    const dayAgo = new Date(Date.now() - 86400_000).toISOString();
     const fired = new Set((await db.getMeta<string[]>('firedReminders')) ?? []);
     const due = await db.items
-      .filter((i) => !!i.remind_at && !i.done_at && !i.deleted_at && (i.snoozed_until ?? i.remind_at)! <= now)
+      .filter((i) => !!i.remind_at && !i.done_at && !i.deleted_at && (i.snoozed_until ?? i.remind_at)! <= now && (i.snoozed_until ?? i.remind_at)! > dayAgo)
       .toArray();
     let changed = false;
     for (const it of due) {

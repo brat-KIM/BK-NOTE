@@ -35,12 +35,34 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 
 > anon 키는 공개돼도 되는 키다(RLS 로 본인 행만 접근). **service_role 키는 절대 앱이나 저장소에 넣지 않는다.**
 
-## 3. 폰(갤럭시)에 설치
+## 3. 폰 푸시 알림(선택)
+
+앱이 꺼져 있어도 ⏰ 시각에 폰으로 알림을 받으려면:
+
+1. 키 만들기: `npx web-push generate-vapid-keys` → Public / Private 키
+2. Edge Function 배포 + 비밀값
+   ```bash
+   supabase functions deploy push --no-verify-jwt
+   supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:you@example.com PUSH_CRON_SECRET=<아무 긴 문자열>
+   ```
+3. SQL Editor 에서 Vault 에 두 값 넣기(크론이 함수 부를 때 씀)
+   ```sql
+   select vault.create_secret('https://<프로젝트>.supabase.co/functions/v1/push', 'bk_push_url');
+   select vault.create_secret('<PUSH_CRON_SECRET 과 같은 값>', 'bk_push_secret');
+   ```
+   그다음 `…_cron.sql` 실행(pg_cron, pg_net 확장 켜기)
+4. `apps/web/.env`(와 Vercel 환경변수)에 `VITE_VAPID_PUBLIC_KEY=<Public 키>`
+5. 폰에서 앱 → ⚙︎ 설정 → 「폰 푸시 알림 켜기」
+
+- PC 앱을 최근 5분 안에 만졌으면 폰 푸시는 생략한다(PC 에서 이미 알림이 뜨므로)
+- 알림의 [완료] [1시간 뒤] 버튼이 바로 반영된다
+
+## 4. 폰(갤럭시)에 설치
 
 - 크롬으로 배포 주소 열기 → 메뉴 → **홈 화면에 추가**
 - 설치 후 카톡·문자에서 「공유 → BK-NOTE」로 바로 항목 추가 가능
 
-## 4. 윈도우 앱
+## 5. 윈도우 앱
 
 - GitHub Actions 「desktop-windows」 가 설치 파일(`.exe`/`.msi`)을 만든다. Actions 탭 → 최신 실행 → Artifacts 에서 받기
 - 처음 실행할 때 SmartScreen 경고 → 「추가 정보 → 실행」(코드서명 안 함)

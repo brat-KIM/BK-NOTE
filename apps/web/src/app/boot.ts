@@ -3,6 +3,7 @@ import { exportJson, exportMarkdown } from './backup';
 import { captureText } from './capture';
 import { createServices, lastCleanupCutoff, readConfig, type AppConfig, type Services } from './services';
 import { startReminders } from './reminders';
+import { startNotificationBridge } from './notifications';
 
 /** 앱 시작: 서비스 생성 → 기본 섹션 → (서버 있으면) 로그인 확인·동기화 → 새벽 정리·알림 스케줄러 */
 export async function boot(
@@ -67,6 +68,7 @@ export async function boot(
   }
 
   startReminders(services);
+  startNotificationBridge(services);
   if (services.platform.kind === 'desktop') void desktopDaily(services);
   return { services, needsLogin };
 }

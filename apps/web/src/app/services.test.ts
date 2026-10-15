@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { lastCleanupCutoff } from './services';
 
 describe('새벽 정리 기준 시각(KST 04:00)', () => {

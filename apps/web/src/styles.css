@@ -183,3 +183,8 @@ html.quick, html.quick body { background: transparent; }
 .quick-window .q-icon { font-size: 22px; color: var(--accent); cursor: move; }
 .quick-window input { flex: 1; border: 0; outline: none; background: transparent; font-size: 17px; }
 .quick-window .q-saved { color: var(--accent); font-size: 13px; }
+.quickadd { display: flex; gap: 6px; }
+.quickadd .mic { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 0 10px; }
+.quickadd .mic.on { background: var(--accent-soft); border-color: var(--accent); }
+.card.stale .item { flex-wrap: wrap; }
+.card.stale .actions { width: 100%; justify-content: flex-end; }

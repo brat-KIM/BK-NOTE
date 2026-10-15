@@ -42,26 +42,27 @@ create index lists_owner_updated on public.lists (owner, updated_at);
 create index items_due on public.items (coalesce(snoozed_until, remind_at))
   where remind_at is not null and done_at is null and deleted_at is null;
 
-create table public.push_subscriptions (
-  id           uuid primary key default gen_random_uuid(),
+-- 기기 목록: 웹 푸시 구독(폰·브라우저)과 「지금 쓰는 중」 표시(데스크톱 사용 중이면 폰 푸시 생략)
+create table public.devices (
   owner        uuid not null default auth.uid() references auth.users(id) on delete cascade,
   device_id    text not null,
-  device_name  text not null default '',
-  subscription jsonb not null,
+  name         text not null default '',
+  kind         text not null default 'web' check (kind in ('web', 'desktop')),
+  push         jsonb,
   last_active  timestamptz not null default now(),
-  unique (owner, device_id)
+  primary key (owner, device_id)
 );
 
 -- ───────── RLS: 본인 행만 ─────────
 alter table public.lists enable row level security;
 alter table public.items enable row level security;
-alter table public.push_subscriptions enable row level security;
+alter table public.devices enable row level security;
 
 create policy own_lists on public.lists for all to authenticated
   using (owner = auth.uid()) with check (owner = auth.uid());
 create policy own_items on public.items for all to authenticated
   using (owner = auth.uid()) with check (owner = auth.uid());
-create policy own_push on public.push_subscriptions for all to authenticated
+create policy own_devices on public.devices for all to authenticated
   using (owner = auth.uid()) with check (owner = auth.uid());
 
 -- ───────── 버전·시각은 서버가 찍는다 ─────────
@@ -249,7 +250,7 @@ end $$;
 revoke all on function public.cleanup_daily(timestamptz) from public, anon, authenticated;
 grant execute on function public.save_row(text, uuid, jsonb, jsonb, boolean, text) to authenticated;
 grant execute on function public.pull_rows(timestamptz) to authenticated;
-grant select, insert, update, delete on public.lists, public.items, public.push_subscriptions to authenticated;
+grant select, insert, update, delete on public.lists, public.items, public.devices to authenticated;
 
 -- ───────── 실시간(Supabase Realtime) ─────────
 do $$

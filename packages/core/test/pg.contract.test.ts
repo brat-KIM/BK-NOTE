@@ -97,4 +97,38 @@ describe.skipIf(!url)('시나리오: Postgres (supabase/migrations)', () => {
     expect(by(old)).toBeUndefined();
     expect(by(t1)!.version).toBe(2);
   });
+
+  it('알림: 도래한 알림은 한 번만, 다시 알림 시각엔 또 한 번, 기기 동기화 버전은 안 올림', async () => {
+    const uid = await newUser();
+    const a = new PgAdapter(pool, uid);
+    const list = crypto.randomUUID();
+    await a.save({ table: 'lists', id: list, patch: { name: '할 일', sort_key: 'a0' }, base: {}, insert: true, device: 'x' });
+    const id = crypto.randomUUID();
+    await a.save({ table: 'items', id, patch: { list_id: list, plain: '세무사 전화', sort_key: 'a0', remind_at: '2026-10-16T06:00:00Z' }, base: {}, insert: true, device: 'x' });
+    const due = async (now: string) =>
+      (await pool.query('select * from public.due_reminders($1)', [now])).rows.filter((r) => r.owner === uid);
+    expect(await due('2026-10-16T05:59:00Z')).toHaveLength(0);
+    const r1 = await due('2026-10-16T06:00:30Z');
+    expect(r1.map((r) => r.plain)).toEqual(['세무사 전화']);
+    expect(await due('2026-10-16T06:01:30Z')).toHaveLength(0);
+    // 버전은 그대로(1) — notified_for 는 서버 전용
+    expect((await a.pull(null)).items[0]!.version).toBe(1);
+    // 1시간 뒤 다시 알림
+    await a.save({ table: 'items', id, patch: { snoozed_until: '2026-10-16T07:00:00Z' }, base: {}, insert: false, device: 'phone' });
+    expect(await due('2026-10-16T06:30:00Z')).toHaveLength(0);
+    expect((await due('2026-10-16T07:00:10Z')).map((r) => r.plain)).toEqual(['세무사 전화']);
+    // 완료하면 안 나감
+    await a.save({ table: 'items', id, patch: { snoozed_until: '2026-10-16T08:00:00Z', done_at: '2026-10-16T07:10:00Z' }, base: {}, insert: false, device: 'phone' });
+    expect(await due('2026-10-16T08:00:10Z')).toHaveLength(0);
+  });
+
+  it('알림 대상: 데스크톱을 최근 5분 안에 썼으면 폰 푸시 생략', async () => {
+    const uid = await newUser();
+    await pool.query(`insert into public.devices (owner, device_id, name, kind, push, last_active) values
+      ($1, 'phone', '갤럭시', 'web', '{"endpoint":"https://push.example/1"}', now() - interval '1 hour'),
+      ($1, 'pc', '사무실 PC', 'desktop', null, '2026-10-16T06:58:00Z')`, [uid]);
+    const targets = async (now: string) => (await pool.query('select * from public.push_targets($1, $2)', [uid, now])).rows;
+    expect(await targets('2026-10-16T07:00:00Z')).toHaveLength(0);
+    expect((await targets('2026-10-16T07:10:00Z')).map((r) => r.device_id)).toEqual(['phone']);
+  });
 });

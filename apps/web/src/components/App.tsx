@@ -9,6 +9,7 @@ import { ItemList } from './ItemList';
 import { ItemMenu } from './ItemMenu';
 import { QuickAdd } from './QuickAdd';
 import { SettingsPanel } from './SettingsPanel';
+import { StaleCard } from './StaleCard';
 import { TrashView } from './TrashView';
 
 type Filter = { contexts: Context[]; sizes: Size[]; today: boolean };
@@ -115,6 +116,7 @@ export function App({ needsLogin }: { needsLogin: boolean }) {
       {view === 'list' && (
         <>
           <FilterChips filter={filter} onChange={setFilter} />
+          <StaleCard list={current} items={items ?? []} />
           <ItemList list={current} items={visible} onMenu={(item, anchor) => setMenu({ item, anchor })} />
         </>
       )}

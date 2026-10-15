@@ -23,6 +23,10 @@ export interface Cloud {
   /** 메일의 6자리 코드로 로그인(데스크톱 앱처럼 링크를 열 수 없을 때) */
   verifyCode(email: string, code: string): Promise<void>;
   signOut(): Promise<void>;
+  /** 기기 상태(마지막 사용 시각) 갱신. 데스크톱을 쓰는 중이면 서버가 폰 푸시를 생략한다. */
+  heartbeat(deviceId: string, name: string, kind: 'web' | 'desktop'): Promise<void>;
+  /** 웹 푸시 구독 저장(폰·브라우저) */
+  savePush(deviceId: string, name: string, sub: PushSubscriptionJSON | null): Promise<void>;
   /** AI 중계 함수 호출 */
   invoke<T>(fn: string, body: unknown): Promise<T>;
 }
@@ -58,6 +62,21 @@ export async function createCloud(url: string, anonKey: string): Promise<Cloud> 
     },
     async signOut() {
       await client.auth.signOut({ scope: 'global' });
+    },
+    async heartbeat(deviceId, name, kind) {
+      const s = await client.auth.getSession();
+      if (!s.data.session) return;
+      await client.from('devices').upsert(
+        { device_id: deviceId, name, kind, last_active: new Date().toISOString() },
+        { onConflict: 'owner,device_id' },
+      );
+    },
+    async savePush(deviceId, name, sub) {
+      const { error } = await client.from('devices').upsert(
+        { device_id: deviceId, name, kind: 'web', push: sub, last_active: new Date().toISOString() },
+        { onConflict: 'owner,device_id' },
+      );
+      if (error) throw error;
     },
     async invoke<T>(fn: string, body: unknown) {
       const { data, error } = await client.functions.invoke(fn, { body: body as Record<string, unknown> });

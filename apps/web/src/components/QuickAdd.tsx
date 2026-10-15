@@ -15,6 +15,24 @@ export function QuickAdd({ onAdd, inputRef }: Props) {
     setText('');
     await onAdd(t);
   };
+  const [listening, setListening] = useState(false);
+  const Speech = typeof window !== 'undefined'
+    ? ((window as unknown as { SpeechRecognition?: SpeechCtor; webkitSpeechRecognition?: SpeechCtor }).SpeechRecognition
+      ?? (window as unknown as { webkitSpeechRecognition?: SpeechCtor }).webkitSpeechRecognition)
+    : undefined;
+  const listen = () => {
+    if (!Speech) return;
+    const rec = new Speech();
+    rec.lang = 'ko-KR';
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const said = e.results[0]?.[0]?.transcript ?? '';
+      setText((t) => (t ? `${t} ${said}` : said));
+    };
+    rec.onend = () => setListening(false);
+    setListening(true);
+    rec.start();
+  };
   return (
     <form className="quickadd" onSubmit={submit}>
       <input
@@ -32,6 +50,19 @@ export function QuickAdd({ onAdd, inputRef }: Props) {
         aria-label="빠른 입력"
         enterKeyHint="done"
       />
+      {Speech && (
+        <button type="button" className={`mic${listening ? ' on' : ''}`} aria-label="말로 적기" onClick={listen}>🎙</button>
+      )}
     </form>
   );
+}
+
+interface SpeechCtor {
+  new (): {
+    lang: string;
+    interimResults: boolean;
+    onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
+    onend: () => void;
+    start(): void;
+  };
 }

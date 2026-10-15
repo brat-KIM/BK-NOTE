@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useServices } from '../app/services';
 import { exportJson, exportMarkdown } from '../app/backup';
+import { enablePush } from '../app/notifications';
 
 export function SettingsPanel({ onClose }: { onClose(): void }) {
   const services = useServices();
@@ -15,6 +16,7 @@ export function SettingsPanel({ onClose }: { onClose(): void }) {
   };
   const stamp = new Date().toISOString().slice(0, 10);
   const [autostart, setAutostart] = useState<boolean | null>(null);
+  const [pushMsg, setPushMsg] = useState<string | null>(null);
   useEffect(() => {
     void platform.autostart?.isEnabled().then(setAutostart);
   }, [platform]);
@@ -27,6 +29,11 @@ export function SettingsPanel({ onClose }: { onClose(): void }) {
       </div>
       <div className="row">
         <button onClick={() => void platform.notify('BK-NOTE', '알림 테스트야 👋')}>알림 테스트</button>
+        {platform.kind === 'web' && (
+          <button onClick={async () => setPushMsg(await enablePush(services).catch((e) => `실패: ${(e as Error).message}`))}>
+            폰 푸시 알림 켜기
+          </button>
+        )}
         {platform.autostart && autostart !== null && (
           <label className="chip">
             <input type="checkbox" checked={autostart}
@@ -35,6 +42,7 @@ export function SettingsPanel({ onClose }: { onClose(): void }) {
           </label>
         )}
       </div>
+      {pushMsg && <p className="hint">{pushMsg}</p>}
       {platform.saveBackup && <p className="hint">매일 밤 9시 이후 문서 폴더 「BK-NOTE 백업」에 JSON·마크다운 백업이 저장돼(최근 14일).</p>}
       {cloud && (
         <div className="row">
