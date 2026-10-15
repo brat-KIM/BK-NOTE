@@ -80,6 +80,7 @@ test('묵은 일 카드의 💡 AI 제안 → 첫 단계를 항목으로', async
   await page.goto('/');
   await page.getByLabel('빠른 입력').fill('블로그 리뉴얼');
   await page.getByLabel('빠른 입력').press('Enter');
+  await expect(rows(page)).toHaveCount(1); // 저장이 끝난 뒤에 시계를 옮긴다
   await page.clock.setSystemTime(new Date('2026-10-15T01:00:00Z'));
   await page.reload();
   const card = page.getByRole('region', { name: '묵은 일 정리' });
