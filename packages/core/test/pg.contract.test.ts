@@ -131,4 +131,14 @@ describe.skipIf(!url)('시나리오: Postgres (supabase/migrations)', () => {
     expect(await targets('2026-10-16T07:00:00Z')).toHaveLength(0);
     expect((await targets('2026-10-16T07:10:00Z')).map((r) => r.device_id)).toEqual(['phone']);
   });
+
+  it('AI 하루 사용 상한(ai_take)', async () => {
+    const a = new PgAdapter(pool, await newUser());
+    const take = () => a.as<boolean>('select public.ai_take(2) as r', []);
+    expect(await take()).toBe(true);
+    expect(await take()).toBe(true);
+    expect(await take()).toBe(false);
+    const anon = new PgAdapter(pool, '');
+    expect(await anon.as<boolean>('select public.ai_take(2) as r', [])).toBe(false);
+  });
 });

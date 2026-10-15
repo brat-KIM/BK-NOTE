@@ -94,13 +94,15 @@ export function parseCapture(input: string, now: Date): ParsedCapture {
       day = addDays(today, w === '오늘' ? 0 : w === '내일' || w === '낼' ? 1 : w === '글피' ? 3 : 2);
     });
     // (다음 주|담주|이번 주) (월)(요일)?
-    if (!day) take(new RegExp(`(?<=\\s)(다음\\s?주|담주|차주|이번\\s?주|이번주)\\s*([월화수목금토일])?(?:요일|욜)?${TAIL}(?=\\s)`, 'u'), (m) => {
+    if (!day) take(new RegExp(`(?<=\\s)(다음\\s?주|담주|차주|이번\\s?주|이번주)\\s*(?:([월화수목금토일])(?:요일|욜)?|(초|중반?|말))?\\s?${TAIL}(?=\\s)`, 'u'), (m) => {
       const next = !/이번/.test(m[1]!);
-      const target = m[2] ? DOW[m[2]]! : 1;
+      // 주 초 → 월, 주 중 → 수, 주 말 → 금
+      const part = m[3] ? (m[3] === '초' ? 1 : m[3].startsWith('중') ? 3 : 5) : null;
+      const target = m[2] ? DOW[m[2]]! : part ?? 1;
       const dow = dowOf(today);
       const mondayThisWeek = addDays(today, -((dow + 6) % 7));
       day = addDays(mondayThisWeek, (next ? 7 : 0) + ((target + 6) % 7));
-      if (!m[2]) fuzzy = true; // "다음 주"만: 월요일로 두되 애매
+      if (!m[2]) fuzzy = true; // "다음 주"·"주 초": 요일을 짐작했으니 AI 보정 후보
     });
     // 주말
     if (!day) take(new RegExp(`(?<=\\s)(이번\\s?)?주말${TAIL}(?=\\s)`, 'u'), () => {

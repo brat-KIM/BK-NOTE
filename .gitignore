@@ -7,3 +7,4 @@ apps/desktop/src-tauri/target/
 apps/web/test-results/
 apps/web/playwright-report/
 .vercel
+apps/web/dist-e2e/

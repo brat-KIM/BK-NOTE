@@ -7,3 +7,5 @@ export * from './server/conflict';
 export { MemoryServer, MemoryAdapter, itemDefaults } from './server/memoryServer';
 export * from './dates';
 export * from './parse';
+export * from './ai/tasks';
+export * from './ai/client';

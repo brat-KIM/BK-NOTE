@@ -2,6 +2,7 @@ import { fromLocalInput, toLocalInput, type Context, type Item, type List, type 
 import { useEffect, useRef } from 'react';
 import { useServices } from '../app/services';
 import { LABEL_COLORS } from '../editor/marks';
+import { RefineBox } from './AiPanels';
 
 interface Props {
   item: Item;
@@ -78,6 +79,7 @@ export function ItemMenu({ item, lists, anchor, onClose, onTrash }: Props) {
           {lists.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
         </select>
       </label>
+      <RefineBox item={item} onClose={onClose} />
       <div className="menu-row">
         <button className="chip danger" onClick={() => { onTrash(item); onClose(); }}>🗑 지우기</button>
       </div>

@@ -40,17 +40,28 @@ export class NoteStore {
 
   // ───────── 섹션 ─────────
 
+  /** 기본 섹션 4개를 한 트랜잭션으로 만든다(첫 실행 도중 앱이 꺼져도 일부만 생기지 않게). */
   async ensureDefaultLists(): Promise<List[]> {
-    const existing = await this.db.lists.filter((l) => !l.deleted_at).toArray();
-    if (existing.length) return sortByKey(existing);
-    let prev: string | null = null;
-    const out: List[] = [];
-    for (const d of DEFAULT_LISTS) {
-      const key = generateKeyBetween(prev, null);
-      prev = key;
-      out.push(await this.addList(d.name, d.kind, key));
-    }
-    return out;
+    const created = await this.db.transaction('rw', this.db.lists, this.db.outbox, async () => {
+      const existing = (await this.db.lists.toArray()).filter((l) => !l.deleted_at);
+      if (existing.length) return existing;
+      let prev: string | null = null;
+      const out: List[] = [];
+      for (const d of DEFAULT_LISTS) {
+        const key = generateKeyBetween(prev, null);
+        prev = key;
+        const row: List = {
+          id: crypto.randomUUID(), name: d.name, kind: d.kind, sort_key: key, version: 0,
+          updated_at: this.now().toISOString(), deleted_at: null,
+        };
+        await this.db.lists.put(row);
+        await this.enqueue('lists', row.id, pickFields(row, LIST_FIELDS), {}, true);
+        out.push(row);
+      }
+      return out;
+    });
+    this.emit(true);
+    return sortByKey(created);
   }
 
   /**

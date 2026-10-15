@@ -188,3 +188,11 @@ html.quick, html.quick body { background: transparent; }
 .quickadd .mic.on { background: var(--accent-soft); border-color: var(--accent); }
 .card.stale .item { flex-wrap: wrap; }
 .card.stale .actions { width: 100%; justify-content: flex-end; }
+.chip.ai { border-style: dashed; }
+.ai-help { margin-top: 2px; }
+.ai-say { font-size: 13px; margin: 4px 0; color: var(--ink); }
+.ai-say pre { white-space: pre-wrap; font: inherit; margin: 0 0 4px; background: var(--chip); padding: 6px; border-radius: 6px; }
+.ai-refine { flex-direction: column; align-items: stretch; }
+.pick { margin: 4px 0; padding-left: 18px; font-size: 14px; }
+.pick li { margin: 2px 0; }
+.ai-panel .actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }

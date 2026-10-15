@@ -10,6 +10,8 @@ import { ItemMenu } from './ItemMenu';
 import { QuickAdd } from './QuickAdd';
 import { SettingsPanel } from './SettingsPanel';
 import { StaleCard } from './StaleCard';
+import { SlotPanel, SplitPreview } from './AiPanels';
+import { looksLikeBlob } from '@bk-note/core';
 import { TrashView } from './TrashView';
 
 type Filter = { contexts: Context[]; sizes: Size[]; today: boolean };
@@ -32,6 +34,8 @@ export function App({ needsLogin }: { needsLogin: boolean }) {
   const [menu, setMenu] = useState<{ item: Item; anchor: HTMLElement } | null>(null);
   const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null);
   const [status, setStatus] = useState<SyncStatus | null>(null);
+  const [split, setSplit] = useState<string | null>(null);
+  const [slot, setSlot] = useState(false);
   const quickRef = useRef<HTMLInputElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,7 +64,7 @@ export function App({ needsLogin }: { needsLogin: boolean }) {
     [db, current?.id],
   );
 
-  const visible = useMemo(() => applyFilter(items ?? [], filter), [items, filter]);
+  const visible = useMemo(() => pinnedFirst(applyFilter(items ?? [], filter)), [items, filter]);
 
   const showToast = useCallback((text: string, undo?: () => void) => {
     setToast({ text, undo });
@@ -75,7 +79,11 @@ export function App({ needsLogin }: { needsLogin: boolean }) {
 
   const add = useCallback(async (text: string) => {
     if (!current || !lists) return;
-    const res = await captureText(services, lists, current, text);
+    if (services.ai && text.includes('\n') === false && looksLikeBlob(text) && text.length > 80) {
+      setSplit(text);
+      return;
+    }
+    const res = await captureText(services, lists, current, text, (n) => showToast(n.text, n.undo));
     if (res.count > 1) showToast(`${res.count}개 항목으로 넣었어`);
   }, [current, lists, services, showToast]);
 
@@ -97,7 +105,11 @@ export function App({ needsLogin }: { needsLogin: boolean }) {
     <div className="app">
       <Header status={status} onSettings={() => setView(view === 'settings' ? 'list' : 'settings')} />
       {needsLogin && <AuthPanel />}
-      <QuickAdd onAdd={add} inputRef={quickRef} />
+      <QuickAdd onAdd={add} inputRef={quickRef} onPasteBlob={services.ai ? (t) => { if (looksLikeBlob(t)) { setSplit(t); return true; } return false; } : undefined} />
+      {split && (
+        <SplitPreview text={split} lists={lists} current={current} onClose={() => setSplit(null)}
+          onDone={(n) => { setSplit(null); showToast(`${n}개 항목으로 넣었어`); }} />
+      )}
       <nav className="tabs" role="tablist">
         {lists.map((l) => (
           <button
@@ -115,7 +127,11 @@ export function App({ needsLogin }: { needsLogin: boolean }) {
       </nav>
       {view === 'list' && (
         <>
-          <FilterChips filter={filter} onChange={setFilter} />
+          <FilterChips filter={filter} onChange={setFilter} onSlot={() => setSlot(!slot)} />
+          {slot && (
+            <SlotPanel items={items ?? []} onClose={() => setSlot(false)}
+              onPick={async (ids) => { for (const id of ids) await store.updateItem(id, { pinned: true }); setSlot(false); showToast('📌 고정했어'); }} />
+          )}
           <StaleCard list={current} items={items ?? []} />
           <ItemList list={current} items={visible} onMenu={(item, anchor) => setMenu({ item, anchor })} />
         </>
@@ -152,7 +168,7 @@ function applyFilter(items: Item[], f: Filter): Item[] {
   return items.filter((i) => keep.has(i.id) || (i.parent_id && keep.has(i.parent_id)));
 }
 
-function FilterChips({ filter, onChange }: { filter: Filter; onChange(f: Filter): void }) {
+function FilterChips({ filter, onChange, onSlot }: { filter: Filter; onChange(f: Filter): void; onSlot(): void }) {
   const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   const chip = (label: string, on: boolean, fn: () => void) => (
     <button className={`chip${on ? ' on' : ''}`} aria-pressed={on} onClick={fn}>{label}</button>
@@ -165,6 +181,15 @@ function FilterChips({ filter, onChange }: { filter: Filter; onChange(f: Filter)
       {chip('⚡5분', filter.sizes.includes('5m'), () => onChange({ ...filter, sizes: toggle(filter.sizes, '5m') }))}
       {chip('⏱️30분', filter.sizes.includes('30m'), () => onChange({ ...filter, sizes: toggle(filter.sizes, '30m') }))}
       {chip('⏰오늘', filter.today, () => onChange({ ...filter, today: !filter.today }))}
+      {chip('🎯 짬 추천', false, onSlot)}
     </div>
   );
+}
+
+/** 📌 고정 항목(과 그 메모)을 맨 위로 */
+function pinnedFirst(items: Item[]): Item[] {
+  const pinned = new Set(items.filter((i) => i.pinned && !i.parent_id).map((i) => i.id));
+  if (!pinned.size) return items;
+  const top = items.filter((i) => pinned.has(i.id) || (i.parent_id && pinned.has(i.parent_id)));
+  return [...top, ...items.filter((i) => !top.includes(i))];
 }

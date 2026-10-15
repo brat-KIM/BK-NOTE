@@ -57,12 +57,25 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 - PC 앱을 최근 5분 안에 만졌으면 폰 푸시는 생략한다(PC 에서 이미 알림이 뜨므로)
 - 알림의 [완료] [1시간 뒤] 버튼이 바로 반영된다
 
-## 4. 폰(갤럭시)에 설치
+## 4. AI 도우미(선택)
+
+1. Anthropic 콘솔에서 API 키 발급(기존 크레딧에서 차감, Haiku 5.5 기준 월 $0.3 안팎)
+2. (선택) Gemini API 키 — Claude 가 실패하면 대신 쓴다(무료 티어 가능, 단 무료 티어 입력은 구글 제품 개선에 쓰일 수 있음)
+3. 배포 + 비밀값(키는 여기에만 둔다. 앱·저장소·채팅에 붙이지 않는다)
+   ```bash
+   supabase functions deploy ai
+   supabase secrets set ANTHROPIC_API_KEY=... GEMINI_API_KEY=... AI_DAILY_LIMIT=200
+   ```
+4. 앱 ⚙︎ 설정 → 「AI 도우미 쓰기」 켜짐 확인
+
+AI 가 하는 일: 애매한 날짜 보정(「담주 초쯤」), 덩어리 붙여넣기 나누기, ✨ 다듬기(항목 메뉴), 🎯 짬 추천, 묵은 일 💡 제안. 항목 메뉴의 🔒 AI 제외 항목은 보내지 않는다.
+
+## 5. 폰(갤럭시)에 설치
 
 - 크롬으로 배포 주소 열기 → 메뉴 → **홈 화면에 추가**
 - 설치 후 카톡·문자에서 「공유 → BK-NOTE」로 바로 항목 추가 가능
 
-## 5. 윈도우 앱
+## 6. 윈도우 앱
 
 - GitHub Actions 「desktop-windows」 가 설치 파일(`.exe`/`.msi`)을 만든다. Actions 탭 → 최신 실행 → Artifacts 에서 받기
 - 처음 실행할 때 SmartScreen 경고 → 「추가 정보 → 실행」(코드서명 안 함)

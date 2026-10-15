@@ -560,7 +560,22 @@ create table push_subscriptions (
 
 ---
 
-## 15. 참고 (착수 시 공식 문서로 재확인)
+## 15. 구현하면서 바뀐 점 (2026-10-15)
+
+| 항목 | 설계 | 구현 | 이유 |
+|---|---|---|---|
+| 서버 | Supabase 프로젝트 생성 | **아직 안 만듦**. 서버 연동부는 어댑터로 분리, SQL 은 로컬 Postgres 16 으로 검증 | 사용자 결정(나중에 만들면 설정값만 넣으면 됨, docs/SETUP.md) |
+| 서버 없을 때 | — | 기기 안에서만 동작(local-only). 새벽 정리는 기기가 대신 실행 | 서버 없이도 PC 한 대로 바로 쓸 수 있게 |
+| 로그인 | 구글 로그인 | **이메일 링크 + 6자리 코드** | 구글 OAuth 설정 없이 시작. 데스크톱 앱은 링크를 열 수 없어서 코드 입력 지원 |
+| 실시간 전달 | DB 트리거 Broadcast | Supabase **Postgres Changes** 구독 | 개인 1인 사용이라 충분하고 설정이 단순 |
+| 기기 상태 표 | push_subscriptions | **devices**(웹 푸시 구독 + 데스크톱 사용 중 표시) | 「PC 쓰는 중이면 폰 푸시 생략」을 한 표로 처리 |
+| 알림 중복 방지 | — | items.notified_for(서버 전용, 동기화 버전 안 올림) | 같은 알림 시각에 한 번만 |
+| 자동 업데이트 | Tauri updater | **보류** | 업데이트 서명 키를 저장소 비밀값으로 넣어야 해서(사람 손 필요). 지금은 Actions 에서 새 설치 파일 받아 덮어쓰기 |
+| AppBar·접기 모드 | P5 | 미구현(P5 그대로) | 로드맵대로 |
+| AI 출력 검사 | — | zod 스키마(Claude 는 구조화 출력 강제, Gemini 는 검사 + 빠진 null 필드 보정) | 제공자마다 출력 품질 차이 흡수 |
+| 날짜 인식 | 규칙 + AI | 규칙 우선, 「담주 초」처럼 요일을 짐작했거나 규칙이 못 푼 시간 표현만 AI 가 뒤에서 보정(되돌리기 토스트) | 기다림 없이 바로 저장 |
+
+## 16. 참고 (착수 시 공식 문서로 재확인)
 
 - Supabase Realtime 한도: <https://supabase.com/docs/guides/realtime/limits>
 - Supabase 요금(무료 플랜 한도, 서드파티 정리): <https://designrevision.com/blog/supabase-pricing.md>

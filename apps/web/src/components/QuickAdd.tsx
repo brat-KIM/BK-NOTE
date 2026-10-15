@@ -3,10 +3,12 @@ import { useState, type FormEvent } from 'react';
 interface Props {
   onAdd(text: string): Promise<void>;
   inputRef?: React.Ref<HTMLInputElement>;
+  /** 덩어리 붙여넣기를 AI 나누기로 가져가면 true */
+  onPasteBlob?(text: string): boolean;
 }
 
 /** 맨 위 빠른 입력창. 엔터로 연달아 여러 개. 여러 줄을 붙이면 줄마다 항목. */
-export function QuickAdd({ onAdd, inputRef }: Props) {
+export function QuickAdd({ onAdd, inputRef, onPasteBlob }: Props) {
   const [text, setText] = useState('');
   const submit = async (e?: FormEvent) => {
     e?.preventDefault();
@@ -41,6 +43,10 @@ export function QuickAdd({ onAdd, inputRef }: Props) {
         onChange={(e) => setText(e.target.value)}
         onPaste={(e) => {
           const pasted = e.clipboardData.getData('text');
+          if (onPasteBlob?.(pasted)) {
+            e.preventDefault();
+            return;
+          }
           if (pasted.includes('\n')) {
             e.preventDefault();
             void onAdd(pasted);

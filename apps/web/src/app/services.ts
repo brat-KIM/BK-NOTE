@@ -1,7 +1,8 @@
-import { LocalDB, NoteStore, SyncEngine, getDeviceId, type ServerAdapter } from '@bk-note/core';
+import { LocalDB, NoteStore, SyncEngine, getDeviceId, type AiTransport, type ServerAdapter } from '@bk-note/core';
 import { createContext, useContext } from 'react';
 import { detectPlatform, type Platform } from './platform';
 import { createCloud, type Cloud } from './cloud';
+import { createAi } from './ai';
 
 export interface Services {
   db: LocalDB;
@@ -11,6 +12,8 @@ export interface Services {
   /** Supabase 설정이 있으면 클라우드 연결 객체, 없으면 null(local-only). */
   cloud: Cloud | null;
   sync: SyncEngine | null;
+  /** AI(서버 중계). 없으면 null */
+  ai: AiTransport | null;
 }
 
 export interface AppConfig {
@@ -38,7 +41,8 @@ export async function createServices(cfg: AppConfig = readConfig()): Promise<Ser
   const adapter = cfg.adapter ?? cloud?.adapter ?? null;
   const sync = adapter ? new SyncEngine(db, adapter, deviceId) : null;
   if (sync) store.onChange((urgent) => sync.notify(urgent));
-  return { db, store, deviceId, platform, cloud, sync };
+  const ai = createAi(cloud);
+  return { db, store, deviceId, platform, cloud, sync, ai };
 }
 
 export const ServicesContext = createContext<Services | null>(null);

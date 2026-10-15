@@ -17,6 +17,10 @@ export function SettingsPanel({ onClose }: { onClose(): void }) {
   const stamp = new Date().toISOString().slice(0, 10);
   const [autostart, setAutostart] = useState<boolean | null>(null);
   const [pushMsg, setPushMsg] = useState<string | null>(null);
+  const [aiOn, setAiOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    void services.db.getMeta<boolean>('aiEnabled').then((v) => setAiOn(v !== false));
+  }, [services.db]);
   useEffect(() => {
     void platform.autostart?.isEnabled().then(setAutostart);
   }, [platform]);
@@ -43,6 +47,19 @@ export function SettingsPanel({ onClose }: { onClose(): void }) {
         )}
       </div>
       {pushMsg && <p className="hint">{pushMsg}</p>}
+      <div className="row">
+        {services.ai ? (
+          aiOn !== null && (
+            <label className="chip">
+              <input type="checkbox" checked={aiOn}
+                onChange={async (e) => { await services.db.setMeta('aiEnabled', e.target.checked); setAiOn(e.target.checked); }} />
+              {' '}AI 도우미 쓰기(애매한 날짜 보정 등)
+            </label>
+          )
+        ) : (
+          <span className="hint">AI 도우미는 서버(Supabase)를 연결하면 켜져(docs/SETUP.md)</span>
+        )}
+      </div>
       {platform.saveBackup && <p className="hint">매일 밤 9시 이후 문서 폴더 「BK-NOTE 백업」에 JSON·마크다운 백업이 저장돼(최근 14일).</p>}
       {cloud && (
         <div className="row">

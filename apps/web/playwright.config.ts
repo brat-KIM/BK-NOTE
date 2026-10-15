@@ -19,5 +19,11 @@ export default defineConfig({
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 400, height: 900 } } },
     { name: 'phone', use: { ...devices['Galaxy S9+'], browserName: 'chromium' } },
   ],
-  webServer: { command: 'pnpm exec vite preview --port 4173 --strictPort', url: 'http://localhost:4173', reuseExistingServer: true },
+  // AI 는 e2e 빌드 모드에서만 window.__bkAiMock 으로 흉내 낸다
+  webServer: {
+    command: 'pnpm exec vite build --mode e2e --outDir dist-e2e && pnpm exec vite preview --outDir dist-e2e --port 4173 --strictPort',
+    url: 'http://localhost:4173',
+    reuseExistingServer: true,
+    timeout: 120_000,
+  },
 });
