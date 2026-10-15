@@ -46,3 +46,8 @@ Supabase 프로젝트를 만든 뒤(docs/SETUP.md) 확인할 것:
 - [ ] 카톡 대화를 통째로 붙여 넣었을 때 나누기 결과가 쓸 만한지
 - [ ] 응답 속도(체감 1~3초인지), 월 사용량(Anthropic 콘솔)
 - [ ] AI 없이(설정에서 끄기)도 모든 기능이 그대로 되는지
+
+## 배포(Vercel)
+- 주소: https://bk-note-omega.vercel.app — 이 브랜치에 푸시할 때마다 자동 재배포
+- [ ] 폰 크롬으로 열리는지. **Vercel 로그인 화면이 뜨면** Vercel → bk-note 프로젝트 → Settings → Deployment Protection → Vercel Authentication 끄기
+- [ ] 지금은 서버 미연결이라 폰과 PC 데이터가 따로 저장됨(동기화는 Supabase 연결 후). Supabase 를 만들면 Vercel 환경변수에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` 추가 후 재배포
