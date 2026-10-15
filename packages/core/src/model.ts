@@ -102,3 +102,17 @@ function canonical(v: unknown): string {
   }
   return JSON.stringify(v);
 }
+
+const TIME_FIELDS = ['remind_at', 'snoozed_until', 'done_at', 'deleted_at', 'created_at', 'updated_at'] as const;
+
+/** 서버 행의 시각 표기(+00:00, 마이크로초)를 기기 표기(ISO Z)로 맞춘다. 문자열 비교가 안전해진다. */
+export function normalizeRow<T extends object>(row: T): T {
+  const r = { ...row } as Record<string, unknown>;
+  for (const f of TIME_FIELDS) {
+    const v = r[f];
+    if (typeof v === 'string') r[f] = new Date(v).toISOString();
+  }
+  delete r.owner;
+  delete r.notified_for;
+  return r as T;
+}

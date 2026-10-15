@@ -53,6 +53,29 @@ export class NoteStore {
     return out;
   }
 
+  /**
+   * 로그인 전 기기에서 만든 기본 섹션과 서버의 기본 섹션이 겹치면(이름이 같으면) 하나로 합친다.
+   * 모든 기기가 같은 결과가 되도록 id 가 가장 작은 섹션을 남긴다.
+   */
+  async mergeDuplicateLists(): Promise<number> {
+    const lists = (await this.db.lists.toArray()).filter((l) => !l.deleted_at);
+    const byName = new Map<string, List[]>();
+    for (const l of lists) byName.set(l.name, [...(byName.get(l.name) ?? []), l]);
+    let merged = 0;
+    for (const group of byName.values()) {
+      if (group.length < 2) continue;
+      group.sort((a, b) => (a.id < b.id ? -1 : 1));
+      const keep = group[0]!;
+      for (const dup of group.slice(1)) {
+        const items = await this.db.items.where('list_id').equals(dup.id).toArray();
+        for (const it of items) await this.updateItem(it.id, { list_id: keep.id }, false);
+        await this.updateList(dup.id, { deleted_at: this.now().toISOString() });
+        merged += 1;
+      }
+    }
+    return merged;
+  }
+
   async addList(name: string, kind: List['kind'] = 'normal', sortKey?: string): Promise<List> {
     const lists = sortByKey(await this.db.lists.toArray());
     const row: List = {

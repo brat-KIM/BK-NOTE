@@ -13,7 +13,7 @@ export async function boot(cfg: AppConfig = readConfig()): Promise<{ services: S
     const session = await cloud.getSession();
     needsLogin = !session;
     cloud.onSession((s) => {
-      if (s) void sync?.start();
+      if (s) void sync?.start().then(() => store.mergeDuplicateLists());
       else sync?.stop();
     });
     if (session) {
@@ -25,6 +25,7 @@ export async function boot(cfg: AppConfig = readConfig()): Promise<{ services: S
 
   // 서버에서 받아오기 전에 섹션을 만들면 기기마다 섹션이 따로 생기므로, 첫 pull 이후에 만든다.
   await store.ensureDefaultLists();
+  if (sync && !needsLogin) await store.mergeDuplicateLists();
 
   // 새벽 정리: 서버가 없으면 기기가 대신 한다(서버가 있으면 pg_cron 이 한다)
   if (!sync) {

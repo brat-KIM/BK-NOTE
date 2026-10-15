@@ -149,4 +149,26 @@ describe('동기화 (메모리 서버)', () => {
     expect((await a.db.items.get(d.id))!.done_at).toBeNull();
     expect((await a.db.items.get(t.id))!.deleted_at).not.toBeNull();
   });
+
+  it('로그인 전 따로 만든 기본 섹션은 합쳐지고 항목은 남는다', async () => {
+    const server = new MemoryServer();
+    const office = await makeDevice(server, 'office');
+    await office.store.ensureDefaultLists();
+    await settle(office);
+    // 폰: 서버와 연결 전에 기본 섹션을 따로 만들고 항목을 적음
+    const phone = await makeDevice(server, 'phone', false);
+    const [, phoneTodo] = await phone.store.ensureDefaultLists();
+    await phone.store.addItem({ listId: phoneTodo!.id, text: '폰에서 적음' });
+    await phone.sync.start();
+    await settle(office, phone);
+    await phone.store.mergeDuplicateLists();
+    await office.store.mergeDuplicateLists();
+    await settle(office, phone);
+    for (const d of [office, phone]) {
+      const lists = (await d.db.lists.toArray()).filter((l) => !l.deleted_at);
+      expect(lists).toHaveLength(4);
+      const todo = lists.find((l) => l.name === '✅ 할 일')!;
+      expect((await d.store.listItems(todo.id)).map((i) => i.plain)).toEqual(['폰에서 적음']);
+    }
+  });
 });

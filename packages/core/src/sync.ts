@@ -1,7 +1,7 @@
 // 동기화 엔진: outbox 를 서버로 보내고(flush), 서버 변경을 받아(pull·실시간) 로컬 DB 에 합친다.
 // 규칙은 docs/DESIGN.md 5.2~5.3 참고.
 import type { LocalDB, OutboxEntry } from './db';
-import type { Item, List, TableName } from './model';
+import { normalizeRow, type Item, type List, type TableName } from './model';
 import { NetworkError, type RealtimeStatus, type ServerAdapter } from './server/protocol';
 
 export type SyncState = 'local-only' | 'offline' | 'syncing' | 'live' | 'error';
@@ -137,7 +137,8 @@ export class SyncEngine {
    * 서버 행을 로컬에 합친다. 로컬이 같거나 더 새 버전이면 무시.
    * 아직 안 보낸 내 변경이 있으면 서버 행 위에 다시 얹는다(보낼 때 서버가 충돌을 판정).
    */
-  async applyRemote(table: TableName, row: Item | List) {
+  async applyRemote(table: TableName, remote: Item | List) {
+    const row = normalizeRow(remote);
     const t = table === 'items' ? this.db.items : this.db.lists;
     await this.db.transaction('rw', t, this.db.outbox, async () => {
       const local = (await t.get(row.id)) as (Item | List) | undefined;
