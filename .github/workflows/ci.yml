@@ -1,0 +1,28 @@
+name: ci
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r typecheck
+      - run: pnpm test
+      - name: DB 계약 테스트(로컬 Postgres + supabase/migrations)
+        run: |
+          sudo apt-get install -y -qq postgresql-16 >/dev/null || true
+          bash scripts/test-db.sh
+      - name: 화면 테스트
+        run: |
+          pnpm --filter @bk-note/web exec playwright install --with-deps chromium
+          pnpm build
+          pnpm e2e

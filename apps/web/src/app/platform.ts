@@ -13,6 +13,8 @@ export interface Platform {
   notify(title: string, body: string): Promise<void>;
   /** 매일 밤 로컬 백업 파일 저장(데스크톱만) */
   saveBackup?(fileName: string, contents: string): Promise<string>;
+  /** 윈도우 시작 시 자동 실행 */
+  autostart?: { isEnabled(): Promise<boolean>; set(on: boolean): Promise<void> };
 }
 
 declare global {

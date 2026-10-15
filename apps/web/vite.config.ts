@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   // Tauri 데스크톱 앱이 같은 빌드를 쓴다(상대 경로 필요 없음: Tauri 는 자체 프로토콜로 루트를 서빙)
   clearScreen: false,
   server: { port: 5173, strictPort: true },
@@ -12,7 +12,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       // Tauri 빌드에서는 서비스 워커가 필요 없다
-      disable: process.env.BKNOTE_TARGET === 'desktop',
+      disable: mode === 'desktop',
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'BK-NOTE',
@@ -48,4 +48,4 @@ export default defineConfig({
     setupFiles: ['src/test-setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
   },
-});
+}));

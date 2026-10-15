@@ -9,11 +9,15 @@
     "preview": "vite preview --port 4173",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "build:desktop": "tsc --noEmit && vite build --mode desktop"
   },
   "dependencies": {
     "@bk-note/core": "workspace:*",
     "@supabase/supabase-js": "^2.117.3",
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-autostart": "^2.7.0",
+    "@tauri-apps/plugin-notification": "^2.7.0",
     "@tiptap/core": "^3.32.0",
     "@tiptap/extension-highlight": "^3.32.0",
     "@tiptap/extension-text-style": "^3.32.0",

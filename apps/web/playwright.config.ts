@@ -1,4 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
+import { existsSync } from 'node:fs';
+
+// 클라우드 작업 환경에는 크로미움이 미리 깔려 있다. CI 에서는 playwright install 로 받은 것을 쓴다.
+const chromium = process.env.PW_CHROMIUM || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
 
 export default defineConfig({
   testDir: 'e2e',
@@ -6,7 +10,7 @@ export default defineConfig({
   retries: 0,
   use: {
     baseURL: 'http://localhost:4173',
-    launchOptions: { executablePath: process.env.PW_CHROMIUM ?? '/opt/pw-browsers/chromium' },
+    launchOptions: chromium ? { executablePath: chromium } : {},
     serviceWorkers: 'block',
     locale: 'ko-KR',
     timezoneId: 'Asia/Seoul',

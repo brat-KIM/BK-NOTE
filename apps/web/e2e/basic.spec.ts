@@ -79,3 +79,27 @@ test('Tab 으로 메모(하위) 만들기', async ({ page, isMobile }) => {
   await page.keyboard.press('Escape');
   await expect(rows(page).nth(1)).toHaveClass(/child/);
 });
+
+test('빠른 입력의 날짜·태그 자동 인식', async ({ page }) => {
+  await quick(page).fill('내일 3시 세무사 전화 @폰 !5');
+  await quick(page).press('Enter');
+  const row = rows(page).first();
+  await expect(row.locator('.rt')).toHaveText('세무사 전화');
+  await expect(row.locator('.badge.remind')).toHaveText(/내일 15:00/);
+  await expect(row).toContainText('📱');
+  await expect(row).toContainText('⚡');
+  // 필터: ⚡5분 → 보임, ⏱️30분 → 안 보임
+  await page.getByRole('button', { name: '⏱️30분' }).click();
+  await expect(rows(page)).toHaveCount(0);
+  await page.getByRole('button', { name: '⏱️30분' }).click();
+  await page.getByRole('button', { name: '⚡5분' }).click();
+  await expect(rows(page)).toHaveCount(1);
+});
+
+test('#아이디어 태그는 아이디어 섹션으로', async ({ page }) => {
+  await quick(page).fill('#아이디어 블로그 글감');
+  await quick(page).press('Enter');
+  await expect(rows(page)).toHaveCount(0);
+  await page.getByRole('tab', { name: /아이디어/ }).click();
+  await expect(rows(page)).toHaveText([/블로그 글감/]);
+});

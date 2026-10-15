@@ -173,3 +173,13 @@ mark { border-radius: 3px; padding: 0 1px; color: inherit; }
   .item { padding: 8px 6px; }
   .formatbar { position: fixed; left: 4px; right: 4px; bottom: calc(4px + env(safe-area-inset-bottom)); top: auto; overflow-x: auto; }
 }
+
+/* 데스크톱 빠른 입력 창 */
+html.quick, html.quick body { background: transparent; }
+.quick-window {
+  display: flex; align-items: center; gap: 8px; height: 100vh; padding: 0 14px;
+  background: var(--panel); border: 2px solid var(--accent); border-radius: 14px;
+}
+.quick-window .q-icon { font-size: 22px; color: var(--accent); cursor: move; }
+.quick-window input { flex: 1; border: 0; outline: none; background: transparent; font-size: 17px; }
+.quick-window .q-saved { color: var(--accent); font-size: 13px; }
