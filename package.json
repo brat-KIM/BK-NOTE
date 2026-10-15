@@ -1,0 +1,14 @@
+{
+  "name": "bk-note",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm --filter @bk-note/web dev",
+    "build": "pnpm --filter @bk-note/web build",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test:db": "bash scripts/test-db.sh",
+    "e2e": "pnpm --filter @bk-note/web e2e"
+  }
+}

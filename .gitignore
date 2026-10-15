@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+apps/desktop/src-tauri/target/
+apps/web/test-results/
+apps/web/playwright-report/
+.vercel
